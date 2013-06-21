@@ -1,4 +1,8 @@
+#!/usr/bin/python
+
+import sys, os
 from itertools import imap
+from optparse import OptionParser
 import pysam
 import dna
 
@@ -190,6 +194,30 @@ def get_pileups(bam, chrom, start, end):
             result[pileupcol.pos-start] = pileupcol.pileups
     return result
 
+
+
+if __name__ == '__main__':
+
+	options = None
+
+	usage = "usage: %prog arg"
+	parser = OptionParser(usage)
+
+	parser.add_option("-b", "--bamfile", dest="bamfile", help="BAM/SAM file to list the chromosomes")
+	#
+	
+	(options, args) = parser.parse_args()
+
+	if len(args) != 0  or not options.bamfile:
+		#print len(args)
+		parser.error("incorrect number of arguments.\n\t\tUse -h to get more information")
+
+	samfile = pysam.Samfile(options.bamfile)
+	
+	for i in xrange(len(samfile.references)):
+		print i, samfile.references[i]
+
+	
 
 
 
