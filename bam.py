@@ -17,7 +17,7 @@ def GenomicReads(bamfile, bam_chrname, genome, extend):
 		for gene in chr.genes:
 			start = max(0, gene.posStart - extend)
 			end = min(chr.length, gene.posEnd + extend)
-			is_reverse = gene.strand=='-'
+			is_reverse = gene.strand[0] in ['-','r','R'] 
 			for read in bamfile.fetch(bam_chrname, start, end):
 				if read.pos >= start and read.pos + read.rlen < end and read.is_reverse == is_reverse:
 					read.gene = gene
@@ -29,7 +29,7 @@ def GenomicReadsWithGene(bamfile, bam_chrname, genome, extend):
 		for gene in chr.genes:
 			start = max(0, gene.posStart - extend)
 			end = min(chr.length, gene.posEnd + extend)
-			is_reverse = gene.strand=='-'
+			is_reverse = gene.strand[0] in ['-','r','R'] 
 			for read in bamfile.fetch(bam_chrname, start, end):
 				if read.pos >= start and read.pos + read.rlen < end and read.is_reverse == is_reverse:
 					yield (read, gene)
@@ -71,13 +71,12 @@ def _normalize(ll):
 #
 def countExprReadStart(sam_file, chromosome_name, Start, End, Strand, windowSize,  normalize):
 	result = [0]*(End-Start)
-	is_reverse = Strand=='-'
+	is_reverse = Strand[0] in ['-','r','R'] 
 	for read in sam_file.fetch(reference=chromosome_name, start=Start, end=End):
-		if  is_reverse:
-			read_pos = read.pos + read.rlen
-		else:
-			read_pos = read.pos
-
+		read_pos = read.pos
+		if read.is_reverse:
+			read_pos += read.rlen
+	#
 		if read_pos >= Start and read_pos < End and is_reverse==read.is_reverse:
 			result[read_pos-Start] += 1
 	#
@@ -89,7 +88,7 @@ def countExprReadStart(sam_file, chromosome_name, Start, End, Strand, windowSize
 
 def countExprReadPileUp(sam_file, chromosome_name, Start, End, Strand, windowSize,  normalize):
 	result = [0]*(End-Start)
-	is_reverse = Strand=='-'
+	is_reverse = Strand[0] in ['-','r','R'] 
 	for pileupcolumn in sam_file.pileup(reference=chromosome_name , start=Start, end=End):
 			if pileupcolumn.pos >= Start and pileupcolumn.pos < End and is_reverse==read.is_reverse:
 				result[pileupcolumn.pos-Start] = pileupcolumn.n
@@ -135,10 +134,10 @@ def countExprKmerReadStart(sam_file, chromosome_name, Start, End, Strand, kmerBi
 	
 	result = [0]*(End-Start)
 	kmer_size = len(kmerBias.keys()[0])
-	is_reverse = Strand=='-'
+	is_reverse = Strand[0] in ['-','r','R'] 
 
 	for read in sam_file.fetch(reference=chromosome_name, start=Start, end=End):
-		if is_reverse:
+		if read.is_reverse:
 			read_pos = read.pos + read.rlen
 			kmer = read.seq[-kmer_size:]
 			kmer = dna.ReverseComplement(kmer)

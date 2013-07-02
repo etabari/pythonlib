@@ -5,6 +5,8 @@ from Bio.Alphabet import generic_dna
 
 dnaindex = {'A':0, 'C':1, 'G':2, 'T':3, 'a':0, 'c':1, 'g':2, 't':3}
 nucleotide = {0:'A', 1:'C', 2:'G', 3:'T'}
+complement = {'A':'T', 'C':'G', 'G':'C', 'T':'A', 'a':'t', 'c':'g', 'g':'c', 't':'a'}
+
 class SequenceStats:
     def __init__(self, A,G,C,T,X,avglen,count):
         self.A = A
@@ -15,6 +17,27 @@ class SequenceStats:
         self.avglen = avglen
         self.count = count
         self.Accumulative = [A, A+C, A+C+G, 1.0]
+
+
+def Kmers(Size):
+    all_kmers = [] 
+    kmer = [0]*Size
+    while kmer[-1]<=3:
+        kmer_s = ''
+        for n in kmer:
+            kmer_s += nucleotide[n]
+        all_kmers += [kmer_s]
+        kmer[0] += 1
+        for i in xrange(Size-1):
+            if kmer[i] > 3:
+                kmer[i] = 0
+                kmer[i+1] += 1
+    return all_kmers
+
+
+
+
+
 
 
 def _Nucleotide(N):

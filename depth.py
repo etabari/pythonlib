@@ -58,12 +58,22 @@ class GeneExpression:
 	#
 	def _setGeneInfo(self):
 		gene = self.name.split(',')
-		self.gName = gene[0][1:]
-		self.strand = gene[2]
-		self.start = int(gene[3])
-		self.end = int(gene[4])
-		self.length = self.end - self.start 
-		self.gi = int(gene[5])
+		if len(gene)>5:
+			self.gName = gene[0]
+			if self.gName[0] == '>':
+				self.gName = self.gName[1:]
+			self.strand = gene[2]
+			self.start = int(gene[3])
+			self.end = int(gene[4])
+			self.length = self.end - self.start 
+			self.gi = int(gene[5])
+		else:
+			self.gName = self.name
+			self.strand = '+'
+			self.start = 0
+			self.end = len(self.data)
+			self.length = self.end
+			self.gi = None
 	#
 	#
 	def peakRegion(self, start=0, end=-1):
@@ -219,7 +229,10 @@ def writeFile(file_name, genes):
 
 			f.write(gene_name +'\t')
 			for x in genes[gene_name].data:
-				f.write('%.2f\t' % x)
+				if int(x) == x:
+					f.write('%d\t' % x)
+				else:
+					f.write('%.2f\t' % x)
 			f.write('\n')
 
 

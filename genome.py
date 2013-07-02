@@ -56,7 +56,13 @@ class Gene:
 			return self.chr.sequence[self.posEnd:other.posStart-1]
 		else:
 			raise Exception('Erorr')
-	
+
+	def sequence(self):
+		if self.strand[0] in ['+','f','F']:
+			return self.chr.sequence[self.posStart:other.posEnd]
+		else:
+			return ReverseComplement(self.chr.sequence[self.posStart:other.posEnd])
+
 	def intergenicDistance(self, other):
 		if self.strand == other.strand and self.chr == other.chr:
 			intdis = other.posStart - self.posEnd
@@ -163,7 +169,7 @@ class Chromosome:
 		self.name = None
 		self.genes = []
 		self.genes_regardless_of_strand = []
-
+		self.__lastGenePosSearch = None
 		
 	def importData(self, folder, name):
 		self.name = name
@@ -172,8 +178,18 @@ class Chromosome:
 
 		self.seqFile = SeqIO.parse(os.path.join(folder, name + '.fna'), "fasta")
 		self.sequence = str(self.seqFile.next().seq)
+		self.sequenceRc = ReverseComplement(self.sequence)
 		self.length = len(self.sequence)
 
+	def getGeneAtPos(self, pos):
+		if self.__lastGenePosSearch and self.__lastGenePosSearch.overlaps(pos):
+			return self.__lastGenePosSearch
+
+		for gene in self.genes:
+			if gene.overlaps(pos):
+				self.__lastGenePosSearch = gene
+				return gene
+		return None
 		
 
 	def _importPtt(self, filename):
@@ -235,7 +251,7 @@ class Genome:
 		self.size = 0
 		self.chromosomes = []
 		self.operons = {}
-		self.__lastGenePosSearch = None
+
 	
 	#def _readOperonFile(self, fileName):
 	#    f = open(fileName)
@@ -264,6 +280,7 @@ class Genome:
 			#    self._readOperonFile(os.path.join(folder, fileName))
 
 
+
 	def getGenePairs(self):
 		gene_pairs = []
 		for chr in self.chromosomes:
@@ -275,15 +292,11 @@ class Genome:
 		return gene_pairs
 
 	
-	def getGeneAtPos(self, pos):
-		if self.__lastGenePosSearch and self.__lastGenePosSearch.overlaps(pos):
-			return self.__lastGenePosSearch
-
+	
+	def getChromosome(self, chrname):
 		for chr in self.chromosomes:
-			for gene in chr.genes:
-				if gene.overlaps(pos):
-					self.__lastGenePosSearch = gene
-					return gene
+			if chrname in chr.name:
+				return chr
 		return None
 
 
