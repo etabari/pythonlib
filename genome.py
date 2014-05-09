@@ -7,15 +7,24 @@ from dna import ReverseComplement
 ###
 ###
 
-def parseValue(x):
-	if x == '' or x == 'NULL':
+def parseValue(strV):
+	if strV == '' or strV == 'NULL':
 		return None
 	try:
-		y = x
-		y = float(x)
-		y = int(x)
-	finally:
-		return y
+		if not strV.isalpha():
+			if strV.isdigit():
+				return int(strV)
+			elif '..' in strV:
+				values = strV.split('..')
+				result = []
+				for value in values:
+					result += [parseValue(value)]
+				return result
+			elif '.' in strV:
+				return float(strV)	
+		return strV
+	except:
+		return strV
 
 
 
