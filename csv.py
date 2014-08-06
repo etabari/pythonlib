@@ -7,11 +7,17 @@ def parseValue(strV):
 	if not strV.isalpha():
 		if strV.isdigit():
 			return int(strV)
-		elif '..' in strV:
-			values = strV.split('..')
+		elif ('..' in strV) or (',' in strV):
+			sep = ','
+			if '..' in strV:
+				sep = '..'
+
+			values = strV.split(sep)
 			result = []
 			for value in values:
-				result += [parseValue(value)]
+				p_value = parseValue(value)
+				if p_value:
+				result += [p_value]
 			return result
 		elif '.' in strV:
 			return float(strV)	
@@ -78,13 +84,15 @@ class CSV:
 	def __iter__(self):
 		return self
 
-	def open(self, file_name, has_header=True):
+	def open(self, file_name, colList=None):
 		self.file = open(file_name)
 		self.current_line = 0
-		self.has_header = has_header
-		if has_header:
+		self.has_header = (has_header == None)
+		if not colList:
 			self.current_line = 1
 			self._parse_header()
+		else:
+			self._colList = colList
 
 
 	def _parse_header(self):
