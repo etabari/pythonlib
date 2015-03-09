@@ -1,6 +1,8 @@
 #!/bin/usr/python
 
 
+DEBUG = 0
+
 def parseValue(strV):
 	if strV == '' or strV == 'NULL':
 		return None
@@ -11,16 +13,18 @@ def parseValue(strV):
 			sep = ','
 			if '..' in strV:
 				sep = '..'
-
 			values = strV.split(sep)
 			result = []
 			for value in values:
 				p_value = parseValue(value)
 				if p_value:
-				result += [p_value]
+					result += [p_value]
 			return result
 		elif '.' in strV:
-			return float(strV)	
+			try:
+				return float(strV)	
+			except:
+				return strV
 	return strV
 
 
@@ -84,24 +88,25 @@ class CSV:
 	def __iter__(self):
 		return self
 
-	def open(self, file_name, colList=None):
+	def open(self, file_name, has_header=True):
 		self.file = open(file_name)
 		self.current_line = 0
-		self.has_header = (has_header == None)
-		if not colList:
+		self.has_header = has_header #(colList == None) or (colList == [])
+		if self.has_header:
 			self.current_line = 1
-			self._parse_header()
-		else:
-			self._colList = colList
+			header = self.file.readline().strip()
+			if header[0] == '#':
+				header = header[1:]
+			self._colList = header.split(self.separator)
+	
 
-
-	def _parse_header(self):
-		header = self.file.readline().strip()
-		self._colList = header.split(self.separator)
-
+	def setColNames(self, colList):
+		if len(self._colList) != len(colList):
+			print 'WARNING: columns for CSV file changed!'
+		self._colList = colList
 
 	def colName(self, i):
-		if self.has_header:
+		if len(self._colList)>i:
 			return self._colList[i]
 		else: 
 			return 'V'+str(i+1) # just as in R, Yoha! 
@@ -110,13 +115,17 @@ class CSV:
 
 	def next(self):
 		line = self.file.readline()
-		#print 'reading ', line
+		if DEBUG:
+			print '\nreading ', line
 		if not line:
 			self.file.close() 
 			raise StopIteration
 
 		cols = line.strip().split(self.separator)
 		result = CSVRow()
+		if DEBUG:
+			print 'column count: ', len(cols)
+
 		
 		if self.has_header and len(cols) != len(self._colList):
 			raise Exception("Incompatible line (" + str(self.current_line) + "): " + line)
@@ -124,7 +133,12 @@ class CSV:
 		for i in xrange(len(cols)):
 			value = parseValue(cols[i])
 
+			if DEBUG:
+				print self.colName(i),':',value
+
 			setattr(result, self.colName(i), value)
+
+
 
 		self.current_line += 1
 
@@ -139,8 +153,10 @@ class CSV:
 		self.current_line = 0
 		if has_header:
 			self.current_line = 1
-			for col in colList:
-				self.file.write(col+self.separator)
+			for i in xrange(len(colList)):
+				self.file.write(colList[i])
+				if i<len(colList)-1:
+					self.file.write(self.separator)
 			self.file.write('\n')		
 
 	def writeln(self, row):
